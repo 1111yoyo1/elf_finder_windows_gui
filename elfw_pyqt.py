@@ -12,6 +12,15 @@ def search_location (search_dir,para1,para2,para3):
 			build=match.group()
 	return build    
 	   
+def search_list (search_list,para1,para2,para3):
+	match_string=r'.*'+para1+r'.*'+para2+r'.*'+para3
+	for file1 in search_list:
+		pattern=re.compile(match_string)
+		match=pattern.match(file1)
+		if match:
+			build=match.group()
+	return build
+
 def get_board_type (configID):
 	type1=''.join(configID[0:2])
 	if type1 == '25':
@@ -44,11 +53,39 @@ def get_cli_no(location,board_config):
 		f.close()
 	else:
 		print "no found mastertable"
+
+def get_cli_nobylocal(location,board_config):
+	if os.path.exists (location):
+		f=open(location)
+		for line in f:
+			pattern=re.compile(r'.*'+board_config+'.*,PP-C(\w{5}),PP-R(\w{5})')
+			match=pattern.match(line)
+			if match:
+				return match.group(1)
+		f.close()
+	else:
+		print "no found mastertable"
 			
 def getbuildno (search_dir,para1):
 	list1=[]
 	match_string=r'.*'+para1+r'.*'
 	for file1 in os.listdir(search_dir):
+		pattern=re.compile(match_string)
+		match=pattern.match(file1)
+		if match:
+			h=match.group()
+			match_string1=r'(.*)(\d{6})'
+			pattern1=re.compile(match_string1)
+			match1=pattern1.match(h)
+			if match1:
+				list1.append(match1.group(2))
+	list1.sort()        
+	return list1[-1]
+
+def getbuildnobylist (search_list,para1):
+	list1=[]
+	match_string=r'.*'+para1+r'.*'
+	for file1 in search_list:
 		pattern=re.compile(match_string)
 		match=pattern.match(file1)
 		if match:
@@ -75,6 +112,11 @@ def getbuildlabel(string):
 			raise Exception(" string not equal 3")
 	return newstring
 
+def getlist(samba_location):
+	list_fw=[]
+	for files in os.listdir(samba_location):
+		list_fw.append(files)
+	return list_fw
 
 class Window( QtGui.QWidget ):
 	def __init__( self ):
@@ -89,6 +131,9 @@ class Window( QtGui.QWidget ):
 
 		self.master_table_file='PPRO_tbl_master_config.csv'
 		self.source_master_table_dir=self.default_local_smart_download+'\\'+'mastertable'+'\\'+'cfg_customer'+'\\'+'db'
+
+		self.fw_location=r'\\samba-fcd2'+'\\'+'fwbuilds'
+		self.list_fw = getlist(self.fw_location)
 
 		self.sign1 = QtGui.QLabel(self)
 		self.sign1.move(10, 30)
@@ -134,9 +179,13 @@ class Window( QtGui.QWidget ):
 		self.lbl_mf.setText("mf_vic")
 		self.lbl_mf.adjustSize()
 
-		self.qbtn_search = QtGui.QPushButton('search', self)
+		self.qbtn_search = QtGui.QPushButton('search Elf', self)
 		self.qbtn_search.move(50, 430) 
-		self.connect( self.qbtn_search, QtCore.SIGNAL( 'clicked()' ), self.onSearch )
+		self.connect( self.qbtn_search, QtCore.SIGNAL( 'clicked()' ), self.onSearchElf )
+
+		self.qbtn_search2 = QtGui.QPushButton('search Stamp', self)
+		self.qbtn_search2.move(50, 410) 
+		self.connect( self.qbtn_search2, QtCore.SIGNAL( 'clicked()' ), self.onSearchStamp )
 
 		self.qbtn_dump1 = QtGui.QPushButton('dump stamp image', self)
 		self.qbtn_dump1.move(200, 430)  
@@ -150,25 +199,28 @@ class Window( QtGui.QWidget ):
 		self.status.move(10, 480)
 		self.status.setText("Ready")
 
-	def onSearch(self):
+		#build= str(self.build.text())
+		#self.build.setText(search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', ''))
+
+	def onSearchElf(self):
 		build= str(self.build.text())
 		configid=str(self.config.text())
-		self.fw_location=r'\\samba-fcd2'+'\\'+'fwbuilds'
+
 		if len(build) == 6:
-			self.build_location=search_location(self.fw_location, build, '', '')
+			self.build_location=search_list(self.list_fw, build, '', '')#search_location(self.fw_location, build, '', '')
 		else :
-			self.build_location=search_location(self.fw_location, getbuildno(self.fw_location, getbuildlabel(build)), '', '')
+			self.build_location=search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', '')#search_location(self.fw_location, getbuildno(self.fw_location, getbuildlabel(build)), '', '')
 
 		board_type = get_board_type(configid)
 
 		#cli_no=get_cli_no(self.fw_location+'\\'+self.build_location,configid)
-		cli_no = get_cli_no(self.default_local_smart_download+'\\'+self.build_location,configid)
+		cli_no = get_cli_nobylocal(self.source_master_table_dir+'\\'+self.master_table_file,configid)
 
 		#board_location=search_location(self.fw_location+"\\"+self.build_location,'','', board_type+'_Board')
 		board_location = 'SF-'+board_type+'_Board'
 		self.fw_elf=search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'fw',cli_no,'elf')  
-		fw_vic=search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'fw',cli_no,'vic')
-		mf_vic=search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'mf',cli_no,'vic')
+		fw_vic=self.fw_elf.replace('elf','vic')
+		mf_vic=fw_vic.replace('fw','mf')
 		full_board_location=self.fw_location+'\\'+self.build_location+'\\'+board_location+'\\'
 
 		self.lbl_elf.setText(full_board_location+self.fw_elf)
@@ -178,16 +230,34 @@ class Window( QtGui.QWidget ):
 		self.lbl_mf.setText(full_board_location+mf_vic)
 		self.lbl_mf.adjustSize()
 
+	def onSearchStamp(self):
+		build= str(self.build.text())
+		configid=str(self.config.text())
+
+		if len(build) == 6:
+			self.build_location=search_list(self.list_fw, build, '', '')#search_location(self.fw_location, build, '', '')
+		else :
+			self.build_location=search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', '')#search_location(self.fw_location, getbuildno(self.fw_location, getbuildlabel(build)), '', '')
+
+		board_type = get_board_type(configid)
+
+		cli_no = get_cli_nobylocal(self.source_master_table_dir+'\\'+self.master_table_file,configid)
+
+		board_location = 'SF-'+board_type+'_Board'
+		self.fw_elf=search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'fw',cli_no,'elf')  
+		full_board_location=self.fw_location+'\\'+self.build_location+'\\'+board_location+'\\'
+
 		self.full_stamp_location=self.fw_location+'\\'+self.build_location+'\\'+'stamped_images'
 		self.vic_file=search_location(self.full_stamp_location,'C'+configid,'fw','vic')
-		self.mf_file=search_location(self.full_stamp_location,'C'+configid,'mf','vic')
+		self.mf_file=self.vic_file.replace('fw','mf')
+
 		self.lb_stamp1.setText(self.full_stamp_location+'\\'+self.vic_file)
 		self.lb_stamp1.adjustSize()
 		self.lb_stamp2.setText(self.full_stamp_location+'\\'+self.mf_file)
 		self.lb_stamp2.adjustSize() 
 
 	def dumpStamp(self):
-		self.onSearch()
+		self.onSearchStamp()
 		if not os.path.exists(self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'+'\\') :
 			os.makedirs(self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'+'\\')
 
@@ -217,7 +287,7 @@ class Window( QtGui.QWidget ):
 			self.status.adjustSize() 
 
 	def dumpElf(self):
-		self.onSearch()
+		self.onSearchElf()
 		try:
 			shutil.copyfile(str(self.lbl_elf.text()), self.default_elf_location+'\\'+self.fw_elf)
 			self.status.setText("Succeed to copy elf ")
