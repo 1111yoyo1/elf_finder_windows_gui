@@ -219,20 +219,19 @@ class Window( QtGui.QWidget ):
 		#board_location=search_location(self.fw_location+"\\"+self.build_location,'','', board_type+'_Board')
 		board_location = 'SF-'+board_type+'_Board'
 		self.fw_elf=search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'fw',cli_no,'elf')  
-		fw_vic=self.fw_elf.replace('elf','vic')
-		mf_vic=fw_vic.replace('fw','mf')
+		#fw_vic=self.fw_elf.replace('elf','vic')
+		#mf_vic=fw_vic.replace('fw','mf')
 		full_board_location=self.fw_location+'\\'+self.build_location+'\\'+board_location+'\\'
 
 		self.lbl_elf.setText(full_board_location+self.fw_elf)
 		self.lbl_elf.adjustSize()
-		self.lbl_vic.setText(full_board_location+fw_vic)
-		self.lbl_vic.adjustSize()
-		self.lbl_mf.setText(full_board_location+mf_vic)
-		self.lbl_mf.adjustSize()
+		# self.lbl_vic.setText(full_board_location+fw_vic)
+		# self.lbl_vic.adjustSize()
+		# self.lbl_mf.setText(full_board_location+mf_vic)
+		# self.lbl_mf.adjustSize()
 
-	def onSearchStamp(self):
+	def onSearchStamp(self,configid):
 		build= str(self.build.text())
-		configid=str(self.config.text())
 
 		if len(build) == 6:
 			self.build_location=search_list(self.list_fw, build, '', '')#search_location(self.fw_location, build, '', '')
@@ -241,15 +240,16 @@ class Window( QtGui.QWidget ):
 
 		board_type = get_board_type(configid)
 
-		cli_no = get_cli_nobylocal(self.source_master_table_dir+'\\'+self.master_table_file,configid)
+		cli_no = get_cli_nobylocal(self.source_master_table_dir+'\\'+self.master_table_file, configid)
 
 		board_location = 'SF-'+board_type+'_Board'
-		self.fw_elf=search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'fw',cli_no,'elf')  
-		full_board_location=self.fw_location+'\\'+self.build_location+'\\'+board_location+'\\'
 
 		self.full_stamp_location=self.fw_location+'\\'+self.build_location+'\\'+'stamped_images'
-		self.vic_file=search_location(self.full_stamp_location,'C'+configid,'fw','vic')
-		self.mf_file=self.vic_file.replace('fw','mf')
+
+		self.vic_file=search_list(getlist(self.full_stamp_location),'C'+configid,'fw','vic')
+		self.mf_file = search_list(getlist(self.full_stamp_location),'C'+configid,'mf','vic')
+		#self.vic_file=search_location(self.full_stamp_location,'C'+configid,'fw','vic')
+		#self.mf_file=search_location(self.full_stamp_location,'C'+configid,'mf','vic')
 
 		self.lb_stamp1.setText(self.full_stamp_location+'\\'+self.vic_file)
 		self.lb_stamp1.adjustSize()
@@ -257,34 +257,37 @@ class Window( QtGui.QWidget ):
 		self.lb_stamp2.adjustSize() 
 
 	def dumpStamp(self):
-		self.onSearchStamp()
-		if not os.path.exists(self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'+'\\') :
-			os.makedirs(self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'+'\\')
+		configid=str(self.config.text())
+		for config in configid.split(';'):
+			self.onSearchStamp(config)
 
-		target_master_table_dir=self.default_local_smart_download+'\\'+self.build_location+'\\'+'cfg_customer'+'\\'+'db'
-		if not os.path.exists(target_master_table_dir):
-			os.makedirs(target_master_table_dir)
-		shutil.copyfile(self.source_master_table_dir+'\\'+self.master_table_file,\
-			target_master_table_dir+'\\'+self.master_table_file)
+			if not os.path.exists(self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'+'\\') :
+				os.makedirs(self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'+'\\')
 
-		try:
-			#full_stamp_location = self.fw_location+'\\'+self.build_location+'\\'+'stamped_images'
-			local_stamp_location = self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'
-			#vic_file=search_location(full_stamp_location,'C'+configid,'fw','vic')
-			#mf_file=search_location(full_stamp_location,'C'+configid,'mf','vic')
+			target_master_table_dir=self.default_local_smart_download+'\\'+self.build_location+'\\'+'cfg_customer'+'\\'+'db'
+			if not os.path.exists(target_master_table_dir):
+				os.makedirs(target_master_table_dir)
+			shutil.copyfile(self.source_master_table_dir+'\\'+self.master_table_file,\
+				target_master_table_dir+'\\'+self.master_table_file)
 
-			source1=self.full_stamp_location+'\\'+self.vic_file
-			target1=local_stamp_location +'\\'+self.vic_file
-			shutil.copyfile(source1,target1)
+			try:
+				#full_stamp_location = self.fw_location+'\\'+self.build_location+'\\'+'stamped_images'
+				local_stamp_location = self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'
+				#vic_file=search_location(full_stamp_location,'C'+configid,'fw','vic')
+				#mf_file=search_location(full_stamp_location,'C'+configid,'mf','vic')
 
-			source2=self.full_stamp_location+'\\'+self.mf_file
-			target2=local_stamp_location+'\\'+self.mf_file
-			shutil.copyfile(source2,target2)
-			self.status.setText("Succeed to dumping ")
-			self.status.adjustSize() 
-		except:
-			self.status.setText("Error occured during dumping")
-			self.status.adjustSize() 
+				source1=self.full_stamp_location+'\\'+self.vic_file
+				target1=local_stamp_location +'\\'+self.vic_file
+				shutil.copyfile(source1,target1)
+
+				source2=self.full_stamp_location+'\\'+self.mf_file
+				target2=local_stamp_location+'\\'+self.mf_file
+				shutil.copyfile(source2,target2)
+				self.status.setText("Succeed to dumping ")
+				self.status.adjustSize() 
+			except:
+				self.status.setText("Error occured during dumping")
+				self.status.adjustSize() 
 
 	def dumpElf(self):
 		self.onSearchElf()
