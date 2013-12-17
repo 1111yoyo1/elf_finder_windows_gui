@@ -114,8 +114,12 @@ def getbuildlabel(string):
 
 def getlist(samba_location):
 	list_fw=[]
-	for files in os.listdir(samba_location):
-		list_fw.append(files)
+	if os.path.isfile(samba_location):
+		for files in open(samba_location):
+			list_fw.append(files)
+	else:
+		for files in os.listdir(samba_location):
+			list_fw.append(files)
 	return list_fw
 
 class Window( QtGui.QWidget ):
@@ -133,7 +137,14 @@ class Window( QtGui.QWidget ):
 		self.source_master_table_dir=self.default_local_smart_download+'\\'+'mastertable'+'\\'+'cfg_customer'+'\\'+'db'
 
 		self.fw_location=r'\\samba-fcd2'+'\\'+'fwbuilds'
-		self.list_fw = getlist(self.fw_location)
+
+		
+		if os.path.isfile('fw_list.dat') is not True :
+			fw_file=open('fw_list.dat', 'w')
+			for str_list_fw in getlist(self.fw_location):
+				fw_file.write(str_list_fw +'\n')
+			fw_file.close()
+		self.list_fw = getlist('fw_list.dat')
 
 		self.sign1 = QtGui.QLabel(self)
 		self.sign1.move(10, 30)
@@ -153,39 +164,41 @@ class Window( QtGui.QWidget ):
 		self.config = QtGui.QLineEdit(self)
 		self.config.move(10, 100) 
 		
-		self.lb_stamp1 = QtGui.QLabel(self)
-		self.lb_stamp1.move(10, 150)
-		self.lb_stamp1.setText("stamp_fw")
-		self.lb_stamp1.adjustSize()  
+		# self.lb_stamp1 = QtGui.QLabel(self)
+		# self.lb_stamp1.move(10, 150)
+		# self.lb_stamp1.setText("stamp_fw")
+		# self.lb_stamp1.adjustSize()  
 
-		self.lb_stamp2 = QtGui.QLabel(self)
-		self.lb_stamp2.move(10, 180)
-		self.lb_stamp2.setText("stamp_mf")
-		self.lb_stamp2.adjustSize()  
+		# self.lb_stamp2 = QtGui.QLabel(self)
+		# self.lb_stamp2.move(10, 180)
+		# self.lb_stamp2.setText("stamp_mf")
+		# self.lb_stamp2.adjustSize()  
 		#self.lb_stamp.setGeometry(QtCore.QRect(20,80,201,22))
 
-		self.lbl_elf = QtGui.QLabel(self)
-		self.lbl_elf.move(10, 210)
-		self.lbl_elf.setText("fw_elf")
-		self.lbl_elf.adjustSize()
+		# self.lbl_elf = QtGui.QLabel(self)
+		# self.lbl_elf.move(10, 210)
+		# self.lbl_elf.setText("fw_elf")
+		# self.lbl_elf.adjustSize()
 
-		self.lbl_vic = QtGui.QLabel(self)
-		self.lbl_vic.move(10, 240)
-		self.lbl_vic.setText("fw_vic")
-		self.lbl_vic.adjustSize()
+		# self.lbl_vic = QtGui.QLabel(self)
+		# self.lbl_vic.move(10, 240)
+		# self.lbl_vic.setText("fw_vic")
+		# self.lbl_vic.adjustSize()
 
-		self.lbl_mf = QtGui.QLabel(self)
-		self.lbl_mf.move(10, 270)
-		self.lbl_mf.setText("mf_vic")
-		self.lbl_mf.adjustSize()
+		# self.lbl_mf = QtGui.QLabel(self)
+		# self.lbl_mf.move(10, 270)
+		# self.lbl_mf.setText("mf_vic")
+		# self.lbl_mf.adjustSize()
 
-		self.qbtn_search = QtGui.QPushButton('search Elf', self)
-		self.qbtn_search.move(50, 430) 
-		self.connect( self.qbtn_search, QtCore.SIGNAL( 'clicked()' ), self.onSearchElf )
+		self.test_message = QtGui.QTextEdit(self)
+		self.test_message.move(10, 210)
+		# self.qbtn_search = QtGui.QPushButton('search Elf', self)
+		# self.qbtn_search.move(50, 430) 
+		# self.connect( self.qbtn_search, QtCore.SIGNAL( 'clicked()' ), self.onSearchElf )
 
-		self.qbtn_search2 = QtGui.QPushButton('search Stamp', self)
-		self.qbtn_search2.move(50, 410) 
-		self.connect( self.qbtn_search2, QtCore.SIGNAL( 'clicked()' ), self.onSearchStamp )
+		# self.qbtn_search2 = QtGui.QPushButton('search Stamp', self)
+		# self.qbtn_search2.move(50, 410) 
+		# self.connect( self.qbtn_search2, QtCore.SIGNAL( 'clicked()' ), self.onSearchStamp )
 
 		self.qbtn_dump1 = QtGui.QPushButton('dump stamp image', self)
 		self.qbtn_dump1.move(200, 430)  
@@ -213,30 +226,23 @@ class Window( QtGui.QWidget ):
 
 		board_type = get_board_type(configid)
 
-		#cli_no=get_cli_no(self.fw_location+'\\'+self.build_location,configid)
 		cli_no = get_cli_nobylocal(self.source_master_table_dir+'\\'+self.master_table_file,configid)
 
-		#board_location=search_location(self.fw_location+"\\"+self.build_location,'','', board_type+'_Board')
 		board_location = 'SF-'+board_type+'_Board'
-		self.fw_elf=search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'fw',cli_no,'elf')  
-		#fw_vic=self.fw_elf.replace('elf','vic')
-		#mf_vic=fw_vic.replace('fw','mf')
+		self.fw_elf= search_location(self.fw_location+'\\'+self.build_location+'\\'+board_location,'fw',cli_no,'elf')  
+
 		full_board_location=self.fw_location+'\\'+self.build_location+'\\'+board_location+'\\'
 
 		self.lbl_elf.setText(full_board_location+self.fw_elf)
 		self.lbl_elf.adjustSize()
-		# self.lbl_vic.setText(full_board_location+fw_vic)
-		# self.lbl_vic.adjustSize()
-		# self.lbl_mf.setText(full_board_location+mf_vic)
-		# self.lbl_mf.adjustSize()
 
 	def onSearchStamp(self,configid):
 		build= str(self.build.text())
 
 		if len(build) == 6:
-			self.build_location=search_list(self.list_fw, build, '', '')#search_location(self.fw_location, build, '', '')
+			self.build_location=search_list(self.list_fw, build, '', '')
 		else :
-			self.build_location=search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', '')#search_location(self.fw_location, getbuildno(self.fw_location, getbuildlabel(build)), '', '')
+			self.build_location=search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', '')
 
 		board_type = get_board_type(configid)
 
@@ -246,15 +252,10 @@ class Window( QtGui.QWidget ):
 
 		self.full_stamp_location=self.fw_location+'\\'+self.build_location+'\\'+'stamped_images'
 
-		self.vic_file=search_list(getlist(self.full_stamp_location),'C'+configid,'fw','vic')
-		self.mf_file = search_list(getlist(self.full_stamp_location),'C'+configid,'mf','vic')
-		#self.vic_file=search_location(self.full_stamp_location,'C'+configid,'fw','vic')
-		#self.mf_file=search_location(self.full_stamp_location,'C'+configid,'mf','vic')
+		self.stamp_list =getlist(self.full_stamp_location)
 
-		self.lb_stamp1.setText(self.full_stamp_location+'\\'+self.vic_file)
-		self.lb_stamp1.adjustSize()
-		self.lb_stamp2.setText(self.full_stamp_location+'\\'+self.mf_file)
-		self.lb_stamp2.adjustSize() 
+		self.vic_file = search_list(self.stamp_list ,'C'+configid,'fw','vic')
+		self.mf_file  = search_list(self.stamp_list ,'C'+configid,'mf','vic')
 
 	def dumpStamp(self):
 		configid=str(self.config.text())
@@ -267,37 +268,41 @@ class Window( QtGui.QWidget ):
 			target_master_table_dir=self.default_local_smart_download+'\\'+self.build_location+'\\'+'cfg_customer'+'\\'+'db'
 			if not os.path.exists(target_master_table_dir):
 				os.makedirs(target_master_table_dir)
-			shutil.copyfile(self.source_master_table_dir+'\\'+self.master_table_file,\
+			if os.path.isfile(target_master_table_dir+'\\'+self.master_table_file) is not True:
+				shutil.copyfile(self.source_master_table_dir+'\\'+self.master_table_file,\
 				target_master_table_dir+'\\'+self.master_table_file)
 
 			try:
-				#full_stamp_location = self.fw_location+'\\'+self.build_location+'\\'+'stamped_images'
 				local_stamp_location = self.default_local_smart_download+'\\'+self.build_location+'\\'+'stamped_images'
-				#vic_file=search_location(full_stamp_location,'C'+configid,'fw','vic')
-				#mf_file=search_location(full_stamp_location,'C'+configid,'mf','vic')
 
 				source1=self.full_stamp_location+'\\'+self.vic_file
 				target1=local_stamp_location +'\\'+self.vic_file
-				shutil.copyfile(source1,target1)
+
+				if os.path.isfile(target1) is not True:
+					shutil.copyfile(source1,target1)
+					self.test_message.append(" %s VIC file dumped" %config)
+				else:
+					self.test_message.append(" %s VIC file already exists" %config)
 
 				source2=self.full_stamp_location+'\\'+self.mf_file
 				target2=local_stamp_location+'\\'+self.mf_file
-				shutil.copyfile(source2,target2)
-				self.status.setText("Succeed to dumping ")
-				self.status.adjustSize() 
+
+				if os.path.isfile(target2) is not True:
+					shutil.copyfile(source2,target2)
+					self.test_message.append(" %s MF file dumped" %config)
+				else:
+					self.test_message.append("%s MF file already exists" %config)
+
 			except:
-				self.status.setText("Error occured during dumping")
-				self.status.adjustSize() 
+				self.test_message.append("Error occured while VIC/MF dumping")
 
 	def dumpElf(self):
 		self.onSearchElf()
 		try:
 			shutil.copyfile(str(self.lbl_elf.text()), self.default_elf_location+'\\'+self.fw_elf)
-			self.status.setText("Succeed to copy elf ")
-			self.status.adjustSize() 
+			self.test_message.append("Succeed to copy elf ")
 		except:
-			self.status.setText("Error occured during copy")
-			self.status.adjustSize() 
+			self.test_message.append("Error occured while elf dumping")
 
 app = QtGui.QApplication( sys.argv )
 win = Window()
