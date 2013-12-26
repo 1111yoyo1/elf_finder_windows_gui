@@ -138,17 +138,20 @@ class Window( QtGui.QWidget ):
 
 		self.fw_location=r'\\samba-fcd2'+'\\'+'fwbuilds'
 
-		
-		if os.path.isfile('fw_list.dat') is not True :
-			fw_file=open('fw_list.dat', 'w')
-			for str_list_fw in getlist(self.fw_location):
-				fw_file.write(str_list_fw +'\n')
-			fw_file.close()
+		# if os.path.isfile('fw_list.dat') is not True :
+		# 	fw_file=open('fw_list.dat', 'w')
+		# 	for str_list_fw in getlist(self.fw_location):
+		# 		fw_file.write(str_list_fw +'\n')
+		# 	fw_file.close()
+		# fw_file=open('fw_list.dat', 'w')
+		# for str_list_fw in getlist(self.fw_location):
+		# 	fw_file.write(str_list_fw +'\n')
+		# fw_file.close()
 		self.list_fw = getlist('fw_list.dat')
 
 		self.sign1 = QtGui.QLabel(self)
 		self.sign1.move(10, 30)
-		self.sign1.setText("Input build lable or build no below:")
+		self.sign1.setText("Input build lable or build no below: like ea2 or 728523")
 		self.sign3 = QtGui.QLabel(self)
 		self.sign3.move(300, 30)
 		self.sign3.setText("dump stamp to: %s" %self.default_local_smart_download)
@@ -175,7 +178,8 @@ class Window( QtGui.QWidget ):
 		# self.lb_stamp2.adjustSize()  
 		#self.lb_stamp.setGeometry(QtCore.QRect(20,80,201,22))
 
-		# self.lbl_elf = QtGui.QLabel(self)
+		self.lbl_elf = QtGui.QLabel(self)
+		self.lbl_elf.hide()
 		# self.lbl_elf.move(10, 210)
 		# self.lbl_elf.setText("fw_elf")
 		# self.lbl_elf.adjustSize()
@@ -200,12 +204,16 @@ class Window( QtGui.QWidget ):
 		# self.qbtn_search2.move(50, 410) 
 		# self.connect( self.qbtn_search2, QtCore.SIGNAL( 'clicked()' ), self.onSearchStamp )
 
+		self.qbtn_refresh = QtGui.QPushButton('refresh FW list', self)
+		self.qbtn_refresh.move(300, 210) # (x, y) 
+		self.connect( self.qbtn_refresh, QtCore.SIGNAL( 'clicked()' ), self.writetofile )
+
 		self.qbtn_dump1 = QtGui.QPushButton('dump stamp image', self)
-		self.qbtn_dump1.move(200, 430)  
+		self.qbtn_dump1.move(300, 250)  
 		self.connect( self.qbtn_dump1, QtCore.SIGNAL( 'clicked()' ), self.dumpStamp )
 
 		self.qbtn_dump2 = QtGui.QPushButton('dump elf', self)
-		self.qbtn_dump2.move(400, 430)
+		self.qbtn_dump2.move(300, 290)
 		self.connect( self.qbtn_dump2, QtCore.SIGNAL( 'clicked()' ), self.dumpElf )
 
 		self.status = QtGui.QLabel(self)
@@ -214,6 +222,13 @@ class Window( QtGui.QWidget ):
 
 		#build= str(self.build.text())
 		#self.build.setText(search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', ''))
+
+	def writetofile(self):
+		fw_file=open('fw_list.dat', 'w')
+		for str_list_fw in getlist(self.fw_location):
+			fw_file.write(str_list_fw +'\n')
+		fw_file.close()
+		self.test_message.append("FW list update successfully" )
 
 	def onSearchElf(self):
 		build= str(self.build.text())
