@@ -95,8 +95,11 @@ def getbuildnobylist (search_list,para1):
 			match1=pattern1.match(h)
 			if match1:
 				list1.append(match1.group(2))
-	list1.sort()        
-	return list1[-1]
+	list1.sort()
+	if len(list1) == 0:       
+		return None
+	else:
+		return list1[-1]
 
 def getbuildlabel(string):
 	newstring=''
@@ -122,31 +125,45 @@ def getlist(samba_location):
 			list_fw.append(files)
 	return list_fw
 
+def getbuildno (search_list,para1):
+    list1=[]
+    match_string=r'.*'+para1+r'.*'
+    for build in search_list:
+        pattern=re.compile(match_string)
+        match=pattern.match(build)
+        if match:
+            list1.append(match.group())
+    #list1.sort() 
+    if len(list1) == 0:   
+    	return None
+    else:
+    	return list1
+    
+def getbuildlabel(string):
+    newstring=''
+    for c in string[0:3]:
+        b=c.upper()+'_'
+        newstring=newstring+b
+    return newstring
+
+
 class Window( QtGui.QWidget ):
 	def __init__( self ):
 
 		super( Window, self ).__init__()
 
 		self.setWindowTitle( "hello" )
-		self.resize( 500, 500 )
+		self.resize( 550, 500 )
 
 		self.default_local_smart_download='Z:\\sd\\builds'
 		self.default_elf_location='Z:'
 
 		self.master_table_file='PPRO_tbl_master_config.csv'
-		self.source_master_table_dir=self.default_local_smart_download+'\\'+'mastertable'+'\\'+'cfg_customer'+'\\'+'db'
+		#self.source_master_table_dir=self.default_local_smart_download+'\\'+'mastertable'+'\\'+'cfg_customer'+'\\'+'db'
+		self.source_master_table_dir = os.path.dirname(__file__)
 
 		self.fw_location=r'\\samba-fcd2'+'\\'+'fwbuilds'
 
-		# if os.path.isfile('fw_list.dat') is not True :
-		# 	fw_file=open('fw_list.dat', 'w')
-		# 	for str_list_fw in getlist(self.fw_location):
-		# 		fw_file.write(str_list_fw +'\n')
-		# 	fw_file.close()
-		# fw_file=open('fw_list.dat', 'w')
-		# for str_list_fw in getlist(self.fw_location):
-		# 	fw_file.write(str_list_fw +'\n')
-		# fw_file.close()
 		self.list_fw = getlist('fw_list.dat')
 
 		self.sign1 = QtGui.QLabel(self)
@@ -167,61 +184,47 @@ class Window( QtGui.QWidget ):
 		self.config = QtGui.QLineEdit(self)
 		self.config.move(10, 100) 
 		
-		# self.lb_stamp1 = QtGui.QLabel(self)
-		# self.lb_stamp1.move(10, 150)
-		# self.lb_stamp1.setText("stamp_fw")
-		# self.lb_stamp1.adjustSize()  
-
-		# self.lb_stamp2 = QtGui.QLabel(self)
-		# self.lb_stamp2.move(10, 180)
-		# self.lb_stamp2.setText("stamp_mf")
-		# self.lb_stamp2.adjustSize()  
-		#self.lb_stamp.setGeometry(QtCore.QRect(20,80,201,22))
-
 		self.lbl_elf = QtGui.QLabel(self)
 		self.lbl_elf.hide()
-		# self.lbl_elf.move(10, 210)
-		# self.lbl_elf.setText("fw_elf")
-		# self.lbl_elf.adjustSize()
 
-		# self.lbl_vic = QtGui.QLabel(self)
-		# self.lbl_vic.move(10, 240)
-		# self.lbl_vic.setText("fw_vic")
-		# self.lbl_vic.adjustSize()
-
-		# self.lbl_mf = QtGui.QLabel(self)
-		# self.lbl_mf.move(10, 270)
-		# self.lbl_mf.setText("mf_vic")
-		# self.lbl_mf.adjustSize()
+		btn_vertical = 450
+		btn_horizontal = 210
 
 		self.test_message = QtGui.QTextEdit(self)
-		self.test_message.move(10, 210)
-		# self.qbtn_search = QtGui.QPushButton('search Elf', self)
-		# self.qbtn_search.move(50, 430) 
-		# self.connect( self.qbtn_search, QtCore.SIGNAL( 'clicked()' ), self.onSearchElf )
+		self.test_message.move(10, btn_horizontal)
+		self.test_message.resize(400,200)
 
-		# self.qbtn_search2 = QtGui.QPushButton('search Stamp', self)
-		# self.qbtn_search2.move(50, 410) 
-		# self.connect( self.qbtn_search2, QtCore.SIGNAL( 'clicked()' ), self.onSearchStamp )
+		self.qbtn_getno = QtGui.QPushButton('Get build No', self)
+		self.qbtn_getno.move(btn_vertical, btn_horizontal)  
+		self.connect( self.qbtn_getno, QtCore.SIGNAL( 'clicked()' ), self.getno )
 
 		self.qbtn_refresh = QtGui.QPushButton('refresh FW list', self)
-		self.qbtn_refresh.move(300, 210) # (x, y) 
+		self.qbtn_refresh.move(btn_vertical, btn_horizontal+40)  
 		self.connect( self.qbtn_refresh, QtCore.SIGNAL( 'clicked()' ), self.writetofile )
 
+		self.qbtn_dump3 = QtGui.QPushButton('refresh master table', self)
+		self.qbtn_dump3.move(btn_vertical, btn_horizontal+40*2)
+		self.connect( self.qbtn_dump3, QtCore.SIGNAL( 'clicked()' ), self.refreshMastertable )
+
 		self.qbtn_dump1 = QtGui.QPushButton('dump stamp image', self)
-		self.qbtn_dump1.move(300, 250)  
+		self.qbtn_dump1.move(btn_vertical, btn_horizontal+40*3)  
 		self.connect( self.qbtn_dump1, QtCore.SIGNAL( 'clicked()' ), self.dumpStamp )
 
 		self.qbtn_dump2 = QtGui.QPushButton('dump elf', self)
-		self.qbtn_dump2.move(300, 290)
+		self.qbtn_dump2.move(btn_vertical, btn_horizontal+40*4)
 		self.connect( self.qbtn_dump2, QtCore.SIGNAL( 'clicked()' ), self.dumpElf )
 
 		self.status = QtGui.QLabel(self)
 		self.status.move(10, 480)
 		self.status.setText("Ready")
-
-		#build= str(self.build.text())
-		#self.build.setText(search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', ''))
+		
+	def getno(self):
+		build=getbuildno(self.list_fw, getbuildlabel(str(self.build.text())))
+		if build is None:
+			self.test_message.append( 'no hit, need to update FW list' )
+		else:
+			self.test_message.append( '\n'.join(build) )
+		
 
 	def writetofile(self):
 		fw_file=open('fw_list.dat', 'w')
@@ -229,6 +232,39 @@ class Window( QtGui.QWidget ):
 			fw_file.write(str_list_fw +'\n')
 		fw_file.close()
 		self.test_message.append("FW list update successfully" )
+		self.list_fw = getlist('fw_list.dat')
+
+	def refreshMastertable(self):
+		build= str(self.build.text())
+
+		if len(build) == 6:
+			self.build_location=search_list(self.list_fw, build, '', '')
+		else :
+			temp_build_no = getbuildnobylist(self.list_fw, getbuildlabel(build))
+			if temp_build_no == None:
+				self.test_message.append("no hit, need to update FW list" )
+			else:
+				self.build_location=search_list(self.list_fw, temp_build_no , '', '')
+
+		source_master_table = self.fw_location+'\\'+self.build_location+'\\'+'cfg_customer'+'\\'+'db'+'\\'+self.master_table_file
+		self.test_message.append("found " +source_master_table)
+		try:
+			shutil.copyfile(source_master_table, self.source_master_table_dir+'\\'+self.master_table_file)
+			self.test_message.append("refresh master_table successfully" )
+		except:
+			self.test_message.append("error occured during refresh master_table " )
+		# board_type = get_board_type(configid)
+
+		# cli_no = get_cli_nobylocal(self.source_master_table_dir+'\\'+self.master_table_file, configid)
+
+		# board_location = 'SF-'+board_type+'_Board'
+
+		# self.full_stamp_location=self.fw_location+'\\'+self.build_location+'\\'+'stamped_images'
+
+		# self.stamp_list =getlist(self.full_stamp_location)
+
+		# self.vic_file = search_list(self.stamp_list ,'C'+configid,'fw','vic')
+		# self.mf_file  = search_list(self.stamp_list ,'C'+configid,'mf','vic')
 
 	def onSearchElf(self):
 		build= str(self.build.text())
@@ -237,7 +273,11 @@ class Window( QtGui.QWidget ):
 		if len(build) == 6:
 			self.build_location=search_list(self.list_fw, build, '', '')#search_location(self.fw_location, build, '', '')
 		else :
-			self.build_location=search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', '')#search_location(self.fw_location, getbuildno(self.fw_location, getbuildlabel(build)), '', '')
+			temp_build_no = getbuildnobylist(self.list_fw, getbuildlabel(build))
+			if temp_build_no == None:
+				self.test_message.append("no hit, need to update FW list" )
+			else:
+				self.build_location=search_list(self.list_fw, temp_build_no , '', '')#search_location(self.fw_location, getbuildno(self.fw_location, getbuildlabel(build)), '', '')
 
 		board_type = get_board_type(configid)
 
@@ -255,9 +295,13 @@ class Window( QtGui.QWidget ):
 		build= str(self.build.text())
 
 		if len(build) == 6:
-			self.build_location=search_list(self.list_fw, build, '', '')
+			self.build_location=search_list(self.list_fw, build, '', '')#search_location(self.fw_location, build, '', '')
 		else :
-			self.build_location=search_list(self.list_fw, getbuildnobylist(self.list_fw, getbuildlabel(build)), '', '')
+			temp_build_no = getbuildnobylist(self.list_fw, getbuildlabel(build))
+			if temp_build_no == None:
+				self.test_message.append("no hit, need to update FW list" )
+			else:
+				self.build_location=search_list(self.list_fw, temp_build_no , '', '')#search_location(self.fw_location, getbuildno(self.fw_location, getbuildlabel(build)), '', '')
 
 		board_type = get_board_type(configid)
 
